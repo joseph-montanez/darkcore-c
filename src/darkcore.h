@@ -10,25 +10,6 @@
 #define map_max_y 5
 #define map_max_z 2
 
-/*
-    case SDLK_ESCAPE:
-        dc_quit(0);
-        break;
-    case SDLK_SPACE:
-        break;
-    case SDLK_UP:
-        world->camera_y += 1.0f;
-        break;
-    case SDLK_DOWN:
-        world->camera_y -= 1.0f;
-        break;
-    case SDLK_LEFT:
-        world->camera_x += 1.0f;
-        break;
-    case SDLK_RIGHT:
-        world->camera_x -= 1.0f;
-        break;
-*/
 typedef struct dc_keys_pressed {
     int space;
     int up;

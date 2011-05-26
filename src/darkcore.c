@@ -1,3 +1,5 @@
+#ifndef DARKCORE_C
+#define DARKCORE_C
 #include <GL/gl.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
@@ -221,7 +223,20 @@ void dc_run(dc_world *world) {
     while(1) {
         /* Process incoming events. */
         dc_process_events(world);
-        printf("tick!\n");
+        
+        if (world->keys_pressed.up == 1) {
+            world->camera_y -= 0.5f;
+        }
+        if (world->keys_pressed.down == 1) {
+            world->camera_y += 0.5f;
+        }
+        if (world->keys_pressed.left == 1) {
+            world->camera_x += 0.5f;
+        }
+        if (world->keys_pressed.right == 1) {
+            world->camera_x -= 0.5f;
+        }
+        
         int NewTime = SDL_GetTicks();  
         int LimitedNewTime = SDL_GetTicks();    
         int TimeSinceLastFrame = NewTime - OldTime;
@@ -264,19 +279,15 @@ void dc_handle_key_down(dc_world* world, SDL_keysym* keysym) {
             break;
         case SDLK_UP:
             world->keys_pressed.up = 1;
-            world->camera_y -= 1.0f;
             break;
         case SDLK_DOWN:
             world->keys_pressed.down = 1;
-            world->camera_y += 1.0f;
             break;
         case SDLK_LEFT:
             world->keys_pressed.left = 1;
-            world->camera_x += 1.0f;
             break;
         case SDLK_RIGHT:
             world->keys_pressed.right = 1;
-            world->camera_x -= 1.0f;
             break;
         default:
             break;
@@ -406,3 +417,4 @@ void dc_draw_screen(dc_world* world) {
 
     SDL_GL_SwapBuffers();
 }
+#endif

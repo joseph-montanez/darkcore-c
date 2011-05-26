@@ -4,50 +4,21 @@
 #include <math.h>
 
 #include "darkcore.h"
+#include "generate.h"
 
 void obj_on_key_press(struct dc_object* self, struct dc_keys_pressed keys) {
     if (keys.up == 1) {
         dc_object_set_y(self, dc_object_get_y(self) + 1);
-    } else if (keys.down == 1) {
+    }
+    if (keys.down == 1) {
         dc_object_set_y(self, dc_object_get_y(self) - 1);
-    } else if (keys.left == 1) {
+    }
+    if (keys.left == 1) {
         dc_object_set_x(self, dc_object_get_x(self) - 1);
-    } else if (keys.right == 1) {
+    }
+    if (keys.right == 1) {
         dc_object_set_x(self, dc_object_get_x(self) + 1);
     }
-    printf("%i\n", keys.up);
-}
-
-void generate_map(dc_world *world) {
-    world->map[0][0][0] = 0;
-    world->map[1][0][0] = 1;
-    world->map[2][0][0] = 1;
-    world->map[3][0][0] = 0;
-    world->map[4][0][0] = 0;
-    
-    world->map[0][1][0] = 0;
-    world->map[1][1][0] = 0;
-    world->map[2][1][0] = 1;
-    world->map[3][1][0] = 0;
-    world->map[4][1][0] = 0;
-    
-    world->map[0][2][0] = 0;
-    world->map[1][2][0] = 0;
-    world->map[2][2][0] = 0;
-    world->map[3][2][0] = 0;
-    world->map[4][2][0] = 0;
-    
-    world->map[0][3][0] = 0;
-    world->map[1][3][0] = 0;
-    world->map[2][3][0] = 0;
-    world->map[3][3][0] = 0;
-    world->map[4][3][0] = 0;
-    
-    world->map[0][4][0] = 0;
-    world->map[1][4][0] = 0;
-    world->map[2][4][0] = 0;
-    world->map[3][4][0] = 0;
-    world->map[4][4][0] = 0;
 }
 
 int main(int argc, char* argv[]) {
