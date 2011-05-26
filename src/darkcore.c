@@ -41,7 +41,7 @@ void dc_object_set_y(dc_object* self, int y) {
 int dc_object_get_y(dc_object* self) {
     return self->y;
 }
-void dc_object_set_on_key_press(struct dc_object* self, void (*on_key_press)(dc_object* obj, struct dc_keys_pressed keys)) {
+void dc_object_set_on_key_press(struct dc_object* self, void (*on_key_press)(int map[map_max_x][map_max_y][map_max_z], struct dc_object *self, struct dc_keys_pressed keys)) {
     self->on_key_press = on_key_press;
 }
 
@@ -61,6 +61,86 @@ void dc_world_add_tile(dc_world *world, dc_tile *tile) {
     world->tiles_size += 1;
     world->tiles = (dc_tile*) realloc(world->tiles, sizeof(dc_tile) * world->tiles_size);
     world->tiles[world->tiles_size - 1] = *tile;
+}
+
+dc_bounding_box* dc_get_bounding_tiles(int pos[2]) {
+    int tile_length = 32;
+    dc_int_2 player_pos = dc_tile_get_position(pos);
+    int player_pos_i[2] = {player_pos._0, player_pos._1};
+    
+
+    int x = player_pos._0 * tile_length;
+    int y = player_pos._1 * tile_length;
+
+    //-- Top Row
+    int topLeft[2]      = {x - tile_length, y - tile_length};
+    int topCenter[2]    = {x,               y - tile_length};
+    int topRight[2]     = {x + tile_length, y - tile_length};
+    //-- Center Row
+    int centerLeft[2]   = {x - tile_length, y};
+    int centerCenter[2] = {x,               y};
+    int centerRight[2]  = {x + tile_length, y};
+    //-- Bottom Row
+    int bottomLeft[2]   = {x - tile_length, y + tile_length};
+    int bottomCenter[2] = {x,               y + tile_length};
+    int bottomRight[2]  = {x + tile_length, y + tile_length};
+    
+    struct dc_bounding_box* boxes = malloc(10);
+    //-- Top Row
+    boxes[0] = dc_get_bounding_box(topLeft, 16);
+    boxes[1] = dc_get_bounding_box(topCenter, 16);
+    boxes[2] = dc_get_bounding_box(topRight, 16);
+    //-- Center Row
+    boxes[3] = dc_get_bounding_box(centerLeft, 16);
+    boxes[4] = dc_get_bounding_box(centerCenter, 16);
+    boxes[5] = dc_get_bounding_box(centerRight, 16);
+    //-- Bottom Row
+    boxes[6] = dc_get_bounding_box(bottomLeft, 16);
+    boxes[7] = dc_get_bounding_box(bottomCenter, 16);
+    boxes[8] = dc_get_bounding_box(bottomRight, 16);
+    boxes[9] = dc_get_bounding_box(player_pos_i, 15);
+    
+    return boxes;
+}
+
+int dc_collision_box_in_box(dc_bounding_box b1, dc_bounding_box b2) {
+    int left1, left2;
+    int right1, right2;
+    int top1, top2;
+    int bottom1, bottom2;
+    
+    left1 = b1.x;
+    left2 = b2.x;
+    right1 = b1.x + b1.width;
+    right2 = b2.x + b2.width;
+    top1 = b1.y;
+    top2 = b2.y;
+    bottom1 = b1.y + b1.height;
+    bottom2 = b2.y + b2.height;
+
+    if (bottom1 < top2 || top1 > bottom2 || right1 < left2 || left1 > right2) {
+        return 0;
+    }
+    
+    return 1;
+}
+
+dc_bounding_box dc_get_bounding_box(int pos[2], int size) {
+    struct dc_bounding_box box;
+    
+    box.x = pos[0] - size;
+    box.x = box.x > 0 ? box.x : 0;
+
+    box.y = pos[1] - size;
+    box.y = box.y > 0 ? box.y : 0;
+
+    box.width = (pos[0] + size) - box.x;
+    box.height = (pos[1] + size) - box.y;
+
+    box.half_width  = box.width != 0 ? box.width / 2 : 0;
+    box.half_height = box.height != 0 ? box.height / 2 : 0;
+    
+    return box;
 }
 
 void dc_texture_create(dc_texture *tex, char *filename, char *image_type) {
@@ -136,11 +216,12 @@ void dc_texture_destory(dc_texture *tex) {
     }
 }
 
-void dc_texture_map(dc_world* world, dc_tile *tile, char *name, int x, int y, int w, int h) {
+void dc_texture_map(dc_world* world, dc_tile *tile, char *name, int x, int y, int w, int h, int blocked) {
     double tile_width = 1.00 / (double) w;
     double tile_height = 1.00 / (double) h;
     
     dc_tile_set_name(tile, name);
+    dc_tile_set_blocked(tile, blocked);
     tile->coord_0[0] = 0.00 + (x * tile_width);
     tile->coord_0[1] = 0.00 + (y * tile_height);
     tile->coord_1[0] = tile_width + (x * tile_width);
@@ -155,13 +236,20 @@ void dc_tile_set_name(dc_tile* tile, char *name) {
     strncpy(tile->name, name, (size_t) 32);
 }
 
-void dc_tile_get_position(int *pos, int *tile_pos) {
+void dc_tile_set_blocked(dc_tile* tile, int blocked) {
+    tile->blocked = blocked;
+}
+
+dc_int_2 dc_tile_get_position(int pos[2]) {
+    dc_int_2 tile_pos;
     //-- We use a 32x32 tile for now
-    int tileLength = 32;
-    int tileHalf = tileLength / 2;
+    int tile_length = 32;
+    int tile_half = tile_length / 2;
     
-    tile_pos[0] = round((pos[0] - tileHalf) / tileLength);
-    tile_pos[1] = round((pos[1] - tileHalf) / tileLength);
+    tile_pos._0 = (int) ((int) round((pos[0] - tile_half) / tile_length));
+    tile_pos._1 = (int) ((int) round((pos[1] - tile_half) / tile_length));
+    
+    return tile_pos;
 }
 
 
@@ -225,16 +313,16 @@ void dc_run(dc_world *world) {
         dc_process_events(world);
         
         if (world->keys_pressed.up == 1) {
-            world->camera_y -= 0.5f;
+            world->camera_y -= 0.015625f * 8;
         }
         if (world->keys_pressed.down == 1) {
-            world->camera_y += 0.5f;
+            world->camera_y += 0.015625f * 8;
         }
         if (world->keys_pressed.left == 1) {
-            world->camera_x += 0.5f;
+            world->camera_x += 0.015625f * 8;
         }
         if (world->keys_pressed.right == 1) {
-            world->camera_x -= 0.5f;
+            world->camera_x -= 0.015625f * 8;
         }
         
         int NewTime = SDL_GetTicks();  
@@ -266,8 +354,6 @@ void dc_quit(int code) {
     SDL_Quit();
     exit(code);
 }
-
-
 
 void dc_handle_key_down(dc_world* world, SDL_keysym* keysym) {
     switch (keysym->sym) {
@@ -392,14 +478,14 @@ void dc_world_draw(dc_world* world) {
     int i;
     for (i = 0; i < world->objects_size; i++) {
         struct dc_object *obj = &world->objects[i];
-        obj->on_key_press(obj, world->keys_pressed);
+        obj->on_key_press(world->map, obj, world->keys_pressed);
         
         // TODO: Move this to a callback to allow custom rendering
         glBegin(GL_QUADS);
-            glVertex3f(-0.5f + ((float) obj->x * 0.5f), -0.5f + ((float) obj->y * 0.5f), 1.0f);
-            glVertex3f(0.5f + ((float) obj->x * 0.5f), -0.5f + ((float) obj->y * 0.5f), 1.0f);
-            glVertex3f(0.5f + ((float) obj->x * 0.5f), 0.5f + ((float) obj->y * 0.5f), 1.0f);
-            glVertex3f(-0.5f + ((float) obj->x * 0.5f), 0.5f + ((float) obj->y * 0.5f), 1.0f);
+            glVertex3f(-0.5f + ((float) obj->x * 0.015625f), -0.5f + ((float) obj->y * 0.015625f), 1.0f);
+            glVertex3f(0.5f + ((float) obj->x * 0.015625f), -0.5f + ((float) obj->y * 0.015625f), 1.0f);
+            glVertex3f(0.5f + ((float) obj->x * 0.015625f), 0.5f + ((float) obj->y * 0.015625f), 1.0f);
+            glVertex3f(-0.5f + ((float) obj->x * 0.015625f), 0.5f + ((float) obj->y * 0.015625f), 1.0f);
         glEnd();
     }
 }
