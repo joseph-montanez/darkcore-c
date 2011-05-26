@@ -52,7 +52,7 @@ typedef struct dc_tile {
 typedef struct dc_object {
     int x;
     int y;
-    void (*on_key_press)(int map[map_max_x][map_max_y][map_max_z], struct dc_object *self, struct dc_keys_pressed keys);
+    void (*on_key_press)(struct dc_object *self);
 } dc_object;
 
 typedef struct dc_world {
@@ -100,7 +100,7 @@ int dc_object_get_x(dc_object* self);
 void dc_object_set_x(dc_object* self,  int x);
 int dc_object_get_y(dc_object* self);
 void dc_object_set_y(dc_object* self, int y);
-void dc_object_set_on_key_press(dc_object* self, void (*on_event)(int map[map_max_x][map_max_y][map_max_z], struct dc_object *self, struct dc_keys_pressed keys));
+void dc_object_set_on_key_press(dc_object* self, void (*on_event)(struct dc_object *self));
 
 void dc_setup(int width, int height);
 void dc_init(int width, int height);

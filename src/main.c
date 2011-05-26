@@ -8,29 +8,25 @@
 
 dc_world world;
 
-void obj_on_key_press(int map[map_max_x][map_max_y][map_max_z], struct dc_object *self, struct dc_keys_pressed keys) {
+void obj_on_key_press(struct dc_object *self) {
     int mx, my;
     mx = 0;
     my = 0;
     printf("Before: %ix%i\n", mx, my);
     
-    if (keys.up == 1) {
+    if (world.keys_pressed.up == 1) {
         my = 8;
     }
-    if (keys.down == 1) {
+    if (world.keys_pressed.down == 1) {
         my = -8;
     }
-    if (keys.left == 1) {
+    if (world.keys_pressed.left == 1) {
         mx = -8;
     }
-    if (keys.right == 1) {
+    if (world.keys_pressed.right == 1) {
         mx = 8;
     }
     
-    if (mx == 0 && my == 0) {
-        // There is no need to calculate anything
-        return;
-    } else {
         int x = mx;
         int y = my; //<-- CRASH OMFG!!!!
         printf("After: %ix%i\n", mx, my);
@@ -82,7 +78,7 @@ void obj_on_key_press(int map[map_max_x][map_max_y][map_max_z], struct dc_object
                 continue;
             }
             
-            int tile_id = map[tile[0]][tile[1]][0];
+            int tile_id = world.map[tile[0]][tile[1]][0];
             
             printf("Tile Position: %ix%i\n", tile[0], tile[1]);
             
@@ -117,7 +113,6 @@ void obj_on_key_press(int map[map_max_x][map_max_y][map_max_z], struct dc_object
         if (mx != 0) {
             dc_object_set_x(self, dc_object_get_x(self) + mx);
         }
-    }
 }
 
 int main(int argc, char* argv[]) {

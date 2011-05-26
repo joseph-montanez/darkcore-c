@@ -41,7 +41,7 @@ void dc_object_set_y(dc_object* self, int y) {
 int dc_object_get_y(dc_object* self) {
     return self->y;
 }
-void dc_object_set_on_key_press(struct dc_object* self, void (*on_key_press)(int map[map_max_x][map_max_y][map_max_z], struct dc_object *self, struct dc_keys_pressed keys)) {
+void dc_object_set_on_key_press(struct dc_object* self, void (*on_key_press)(struct dc_object *self)) {
     self->on_key_press = on_key_press;
 }
 
@@ -478,7 +478,7 @@ void dc_world_draw(dc_world* world) {
     int i;
     for (i = 0; i < world->objects_size; i++) {
         struct dc_object *obj = &world->objects[i];
-        obj->on_key_press(world->map, obj, world->keys_pressed);
+        obj->on_key_press(obj);
         
         // TODO: Move this to a callback to allow custom rendering
         glBegin(GL_QUADS);
@@ -488,7 +488,8 @@ void dc_world_draw(dc_world* world) {
             glVertex3f(-0.5f + ((float) obj->x * 0.015625f), 0.5f + ((float) obj->y * 0.015625f), 1.0f);
         glEnd();
         
-        free(obj);
+        //free(obj);
+        //obj = NULL;
     }
 }
 
