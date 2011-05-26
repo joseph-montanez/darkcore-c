@@ -487,6 +487,8 @@ void dc_world_draw(dc_world* world) {
             glVertex3f(0.5f + ((float) obj->x * 0.015625f), 0.5f + ((float) obj->y * 0.015625f), 1.0f);
             glVertex3f(-0.5f + ((float) obj->x * 0.015625f), 0.5f + ((float) obj->y * 0.015625f), 1.0f);
         glEnd();
+        
+        free(obj);
     }
 }
 

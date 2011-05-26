@@ -1,6 +1,6 @@
 LIBS = -lGL -lSDL -lSDL_image -lGLU
 INCLUDES = -I/usr/include/SDL
-FLAGS = -g -Wall
+FLAGS = -ggdb -Wall
 
 all: src/darkcore.o src/generate.o src/main.c
 	gcc $(LIBS) $(INCLUDES) $(FLAGS) obj/darkcore.o obj/generate.o src/main.c -o main
