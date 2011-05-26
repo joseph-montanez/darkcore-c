@@ -9,13 +9,38 @@
 
 int dc_texture_inc = 0;
 
-void dc_world_create(dc_world *world) {
-    world->objects = (dc_object*) malloc(sizeof(dc_object) * 1);
-    world->objects_size = 0;
-    world->textures = (dc_texture*) malloc(sizeof(dc_texture) * 1);
-    world->textures_size = 0;
-    world->tiles = (dc_tile*) malloc(sizeof(dc_tile) * 1);
-    world->tiles_size = 0;
+dc_world dc_world_create() {
+    dc_world world;
+    
+    world.objects = (dc_object*) malloc(sizeof(dc_object) * 1);
+    world.objects_size = 0;
+    world.textures = (dc_texture*) malloc(sizeof(dc_texture) * 1);
+    world.textures_size = 0;
+    world.tiles = (dc_tile*) malloc(sizeof(dc_tile) * 1);
+    world.tiles_size = 0;
+    
+    return world;
+}
+
+dc_object dc_object_create() {
+    dc_object obj;
+    return  obj;
+}
+
+int dc_object_get_x(dc_object* self) {
+    return self->x;
+}
+void dc_object_set_x(dc_object* self, int x) {
+    self->x = x;
+}
+void dc_object_set_y(dc_object* self, int y) {
+    self->y = y;
+}
+int dc_object_get_y(dc_object* self) {
+    return self->y;
+}
+void dc_object_set_on_key_press(struct dc_object* self, void (*on_key_press)(dc_object* obj, struct dc_keys_pressed keys)) {
+    self->on_key_press = on_key_press;
 }
 
 void dc_world_add_object(dc_world *world, dc_object *obj) {
@@ -50,11 +75,13 @@ void dc_texture_create(dc_texture *tex, char *filename, char *image_type) {
     } else {
         SDL_SetAlpha(tex->surface, 0, 0);
     	// Check that the image's width is a power of 2
+    	tex->width = tex->surface->w;
 	    if ( (tex->surface->w & (tex->surface->w - 1)) != 0 ) {
 		    printf("warning: image.bmp's width is not a power of 2\n");
 	    }
      
 	    // Also check if the height is a power of 2
+    	tex->height = tex->surface->h;
 	    if ( (tex->surface->h & (tex->surface->h - 1)) != 0 ) {
 		    printf("warning: image.bmp's height is not a power of 2\n");
 	    }
@@ -228,37 +255,54 @@ void dc_quit(int code) {
 
 
 void dc_handle_key_down(dc_world* world, SDL_keysym* keysym) {
-
-    /* 
-     * We're only interested if 'Esc' has
-     * been presssed.
-     *
-     * EXERCISE: 
-     * Handle the arrow keys and have that change the
-     * viewing position/angle.
-     */
     switch (keysym->sym) {
         case SDLK_ESCAPE:
             dc_quit(0);
             break;
         case SDLK_SPACE:
+            world->keys_pressed.space = 1;
             break;
         case SDLK_UP:
-            world->camera_y += 1.0f;
-            break;
-        case SDLK_DOWN:
+            world->keys_pressed.up = 1;
             world->camera_y -= 1.0f;
             break;
+        case SDLK_DOWN:
+            world->keys_pressed.down = 1;
+            world->camera_y += 1.0f;
+            break;
         case SDLK_LEFT:
+            world->keys_pressed.left = 1;
             world->camera_x += 1.0f;
             break;
         case SDLK_RIGHT:
+            world->keys_pressed.right = 1;
             world->camera_x -= 1.0f;
             break;
         default:
             break;
     }
+}
 
+void dc_handle_key_up(dc_world* world, SDL_keysym* keysym) {
+    switch (keysym->sym) {
+        case SDLK_SPACE:
+            world->keys_pressed.space = 0;
+            break;
+        case SDLK_UP:
+            world->keys_pressed.up = 0;
+            break;
+        case SDLK_DOWN:
+            world->keys_pressed.down = 0;
+            break;
+        case SDLK_LEFT:
+            world->keys_pressed.left = 0;
+            break;
+        case SDLK_RIGHT:
+            world->keys_pressed.right = 0;
+            break;
+        default:
+            break;
+    }
 }
 
 void dc_process_events(dc_world *world) {
@@ -269,6 +313,9 @@ void dc_process_events(dc_world *world) {
             case SDL_KEYDOWN:
                 dc_handle_key_down(world, &event.key.keysym);
                 break;
+            case SDL_KEYUP:
+                dc_handle_key_up(world, &event.key.keysym);
+                break;
             case SDL_QUIT:
                 dc_quit(0);
                 break;
@@ -276,7 +323,7 @@ void dc_process_events(dc_world *world) {
     }
 }
 
-void dc_draw_textured_quad(dc_world* world) {
+void dc_world_draw(dc_world* world) {
     static GLubyte white[] = { 255, 255, 255, 255 };
     
     int x, y;
@@ -330,6 +377,20 @@ void dc_draw_textured_quad(dc_world* world) {
             glDisable(GL_TEXTURE_2D);
         }
     }
+    
+    int i;
+    for (i = 0; i < world->objects_size; i++) {
+        struct dc_object *obj = &world->objects[i];
+        obj->on_key_press(obj, world->keys_pressed);
+        
+        // TODO: Move this to a callback to allow custom rendering
+        glBegin(GL_QUADS);
+            glVertex3f(-0.5f + ((float) obj->x * 0.5f), -0.5f + ((float) obj->y * 0.5f), 1.0f);
+            glVertex3f(0.5f + ((float) obj->x * 0.5f), -0.5f + ((float) obj->y * 0.5f), 1.0f);
+            glVertex3f(0.5f + ((float) obj->x * 0.5f), 0.5f + ((float) obj->y * 0.5f), 1.0f);
+            glVertex3f(-0.5f + ((float) obj->x * 0.5f), 0.5f + ((float) obj->y * 0.5f), 1.0f);
+        glEnd();
+    }
 }
 
 void dc_draw_screen(dc_world* world) {
@@ -341,7 +402,7 @@ void dc_draw_screen(dc_world* world) {
     /* Move down the z-axis. */
     glTranslatef( 0.0, 0.0, -5.0 );
     
-    dc_draw_textured_quad(world);
+    dc_world_draw(world);
 
     SDL_GL_SwapBuffers();
 }
